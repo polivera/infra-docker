@@ -1,0 +1,56 @@
+services:
+  webserver:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    volumes:
+      - paperless_data:/usr/src/paperless/data
+      - paperless_media:/usr/src/paperless/media
+      - paperless_export:/usr/src/paperless/export
+    environment:
+      PAPERLESS_REDIS: redis://paperless_broker:6379
+      PAPERLESS_DBHOST: paperless_db
+      PAPERLESS_SECRET_KEY: ${PAPERLESS_SECRET_KEY}
+      PAPERLESS_DBNAME: ${POSTGRES_DB}
+      PAPERLESS_DBUSER: ${POSTGRES_USER}
+      PAPERLESS_DBPASS: ${POSTGRES_PASS}
+      PAPERLESS_OCR_LANGUAGE: spa
+      PAPERLESS_OCR_LANGUAGES: eng
+      PAPERLESS_URL: https://paper.vicugna.party
+    networks:
+      - public_network
+      - redis_network
+      - postgres_network
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      update_config:
+        order: start-first
+        failure_action: rollback
+
+volumes:
+  paperless_media:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.0.11,rw,soft,nolock
+      device: ":/mnt/SlowPool/Paperless/media"
+  paperless_export:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.0.11,rw,soft,nolock
+      device: ":/mnt/SlowPool/Paperless/export"
+  paperless_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.0.11,rw,soft,nolock
+      device: ":/mnt/FastPool/Paperless"
+
+networks:
+  public_network:
+    external: true
+  redis_network:
+    external: true
+  postgres_network:
+    external: true

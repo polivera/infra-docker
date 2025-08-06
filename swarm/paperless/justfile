@@ -8,9 +8,9 @@ clean:
     rm docker-compose.override.yml
 
 deploy-override:
-    docker stack deploy --detach=false -c docker-compose.yml -c docker-compose.override.yml postgres
+    docker stack deploy --detach=false -c docker-compose.yml -c docker-compose.override.yml monitoring
 
 deploy: decrypt deploy-override clean
 
 destroy:
-    docker stack rm postgres
+    docker stack rm monitoring

@@ -14,12 +14,13 @@ services:
       - '--web.enable-admin-api'
       - '--storage.tsdb.wal-compression'  # Enable WAL compression
     volumes:
-      - /mnt/databases/monitoring/prometheus/data:/prometheus
-      - /mnt/databases/monitoring/prometheus/config:/etc/prometheus
-    ports:
-      - "9090:9090"
+      - prometheus_data:/prometheus
+      - prometheus_config:/etc/prometheus
+#    ports:
+#      - "9090:9090"
     networks:
       - monitoring_network
+      - public_network
     deploy:
       replicas: 1
       restart_policy:
@@ -58,7 +59,7 @@ services:
       GF_USERS_ALLOW_ORG_CREATE: 'false'
       GF_EXPLORE_ENABLED: 'true'
     volumes:
-      - /mnt/databases/monitoring/grafana:/var/lib/grafana
+      - grafana_data:/var/lib/grafana
     networks:
       - monitoring_network
       - public_network
@@ -72,7 +73,7 @@ services:
         max_attempts: 3
       resources:
         limits:
-          cpus: '0.5'  # Reduced for 5 concurrent users
+          cpus: '0.5'  # Reduced to 5 concurrent users
           memory: 512M  # Reduced memory allocation
         reservations:
           cpus: '0.1'
@@ -132,6 +133,26 @@ services:
       mode: global
     privileged: true
     pid: host
+
+volumes:
+  grafana_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.0.11,rw,soft,nolock
+      device: ":/mnt/FastPool/Grafana"
+  prometheus_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.0.11,rw,soft,nolock
+      device: ":/mnt/FastPool/Databases/prometheus"
+  prometheus_config:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.0.11,rw,soft,nolock
+      device: ":/mnt/SlowPool/Prometheus"
 
 networks:
   monitoring_network:

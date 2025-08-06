@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
-      - /mnt/databases/postgres/data:/var/lib/postgresql/data
+      - postgres:/var/lib/postgresql/data
     networks:
       - postgres_network
       - public_network
@@ -28,83 +28,6 @@ services:
       timeout: 10s
       retries: 3
 
-  postgres-backup:
-    image: postgres:17.4
-    environment:
-      POSTGRES_HOST: postgres
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-7}
-      PGPASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - /mnt/dbbackups/postgres:/backups
-    networks:
-      - postgres_network
-    deploy:
-      replicas: 1
-      restart_policy:
-        condition: on-failure
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-    command: >
-      bash -c '
-      # Start PostgreSQL in background
-      docker-entrypoint.sh postgres &
-      PG_PID=$!
-
-      # Wait for PostgreSQL to be ready
-      until pg_isready -U $POSTGRES_USER -d $POSTGRES_DB
-      do
-        echo "Waiting for pg_isready"
-        sleep 2
-      done
-
-      # Install cron
-      apt-get update && apt-get install -y cron && rm -rf /var/lib/apt/lists/*
-
-      # Create backup script
-      cat > /backup_script.sh << "EOF"
-      #!/bin/bash
-      set -e
-      TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-
-      echo "[$(date)] Starting backup..."
-
-      # Backup all databases using pg_dumpall
-      pg_dumpall -U $POSTGRES_USER | gzip > /backups/full-backup-$TIMESTAMP.sql.gz
-
-      # Backup each database individually
-      psql -U $POSTGRES_USER -d postgres -t -c "SELECT datname FROM pg_database WHERE NOT datistemplate AND datname != '\''postgres'\''" | while read dbname; do
-        if [ ! -z "$dbname" ] && [ "$dbname" != " " ]; then
-          dbname_clean=$(echo $dbname | tr -d " ")
-          if [ ! -z "$dbname_clean" ]; then
-            echo "Backing up database: $dbname_clean"
-            pg_dump -U $POSTGRES_USER $dbname_clean | gzip > /backups/$dbname_clean-backup-$TIMESTAMP.sql.gz
-          fi
-        fi
-      done
-
-      # Clean up old backups
-      find /backups -name "*backup-*.sql.gz" -type f -mtime +$BACKUP_RETENTION_DAYS -delete
-      echo "[$(date)] Backup completed successfully"
-      EOF
-
-      chmod +x /backup_script.sh
-
-      # Set up cron job (daily at 2 AM)
-      echo "0 2 * * * /backup_script.sh >> /var/log/backup.log 2>&1" | crontab -
-
-      # Start cron
-      cron
-
-      # Wait for PostgreSQL process
-      wait $PG_PID
-      '
-    depends_on:
-      - postgres
-
   pgadmin:
     image: dpage/pgadmin4:9.6
     environment:
@@ -113,7 +36,7 @@ services:
       PGADMIN_CONFIG_SERVER_MODE: 'False'
       PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
     volumes:
-      - /mnt/databases/postgres/pgadmin:/var/lib/pgadmin
+      - pgadmin:/var/lib/pgadmin
     networks:
       - postgres_network
       - public_network
@@ -130,6 +53,20 @@ services:
           memory: 256M
     depends_on:
       - postgres
+
+volumes:
+  postgres:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.0.11,rw,soft,nolock
+      device: ":/mnt/FastPool/Databases/postgres"
+  pgadmin:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.0.11,rw,soft,nolock
+      device: ":/mnt/SlowPool/PGAdmin"
 
 networks:
   postgres_network:
