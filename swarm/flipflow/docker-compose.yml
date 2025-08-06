@@ -1,0 +1,20 @@
+services:
+  db:
+    image: mysql:8.4
+    networks:
+      - flipflow_network
+    ports:
+      - ${TEST_DB_PORT}:3306
+    volumes:
+      - /mnt/flipflow/mysql:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${TEST_DB_PASSWORD}
+      MYSQL_DATABASE: ${TEST_DB_DATABASE}
+      MYSQL_USER: ${TEST_DB_USERNAME}
+      MYSQL_PASSWORD: ${TEST_DB_PASSWORD}
+
+networks:
+  flipflow_network:
+    driver: overlay
+    attachable: true
+    name: flipflow_network

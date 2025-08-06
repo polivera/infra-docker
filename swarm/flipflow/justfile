@@ -1,0 +1,16 @@
+decrypt:
+    sops -d secrets.enc.yaml > docker-compose.override.yml
+
+encrypt:
+    sops -e docker-compose.override.yml > secrets.enc.yaml
+
+clean:
+    rm docker-compose.override.yml
+
+deploy-override:
+    docker stack deploy --detach=false -c docker-compose.yml -c docker-compose.override.yml flipflow
+
+deploy: decrypt deploy-override clean
+
+destroy:
+    docker stack rm flipflow
