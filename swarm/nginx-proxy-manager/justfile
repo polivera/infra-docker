@@ -1,16 +1,5 @@
-decrypt:
-    sops -d secrets.enc.yaml > docker-compose.override.yml
-
-clean:
-    rm docker-compose.override.yml
-
-deploy-override:
-    docker nginx-proxy-manager deploy --detach=false -c docker-compose.yml -c docker-compose.secrets.yml nginx-proxy-manager
-
-deploy-decrypt: decrypt deploy-override clean
-
 deploy:
-    docker nginx-proxy-manager deploy --detach=false -c docker-compose.yml nginx-proxy-manager
+    docker stack deploy --detach=false -c docker-compose.yml nginx-proxy-manager
 
 destroy:
-    docker nginx-proxy-manager rm nginx-proxy-manager
+    docker stack rm nginx-proxy-manager

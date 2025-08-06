@@ -1,0 +1,141 @@
+services:
+
+  ##### PROMETHEUS ##################################################################
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'  # Increase retention
+      - '--storage.tsdb.retention.size=8GB'  # Add size limit
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+      - '--storage.tsdb.wal-compression'  # Enable WAL compression
+    volumes:
+      - /mnt/databases/monitoring/prometheus/data:/prometheus
+      - /mnt/databases/monitoring/prometheus/config:/etc/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring_network
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+    user: "99:99"
+
+  ##### GRAFANA ##################################################################
+  grafana:
+    image: grafana/grafana:12.1.0
+    environment:
+      # Security
+      GF_SECURITY_ADMIN_USER: ${GF_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_ADMIN_PASSWORD}
+      # Server
+      GF_SERVER_ROOT_URL: https://grafana.vicugna.party
+      GF_SERVER_SERVE_FROM_SUB_PATH: 'false'
+      # Database (use SQLite for simplicity)
+      GF_DATABASE_TYPE: sqlite3
+      GF_DATABASE_PATH: /var/lib/grafana/grafana.db
+      # Disable analytics
+      GF_ANALYTICS_REPORTING_ENABLED: 'false'
+      GF_ANALYTICS_CHECK_FOR_UPDATES: 'false'
+      # Allow embedding
+      GF_SECURITY_ALLOW_EMBEDDING: 'true'
+      # Performance optimizations for low-user environment
+      GF_USERS_ALLOW_SIGN_UP: 'false'
+      GF_USERS_ALLOW_ORG_CREATE: 'false'
+      GF_EXPLORE_ENABLED: 'true'
+    volumes:
+      - /mnt/databases/monitoring/grafana:/var/lib/grafana
+    networks:
+      - monitoring_network
+      - public_network
+    #    ports:
+      #      - "3000:3000"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '0.5'  # Reduced for 5 concurrent users
+          memory: 512M  # Reduced memory allocation
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    user: "472:472"  # Use Grafana's official UID/GID instead of root
+
+  ##### CADVISOR ##################################################################
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.52.0
+    command:
+      - '--housekeeping_interval=30s'  # Increased from 10s for lower overhead
+      - '--docker_only=true'
+      - '--disable_metrics=cpu_topology,disk,tcp,udp,percpu,sched,process,hugetlb,referenced_memory,resctrl,cpuset,advtcp,memory_numa'
+      - '--docker_env_metadata_whitelist=PATH,HOSTNAME'  # Limit env vars collected
+      - '--max_housekeeping_interval=60s'  # Cap max interval
+      - '--enable_load_reader=false'  # Disable if you don't need load metrics
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+      - /proc:/rootfs/proc:ro  # Add proc for better container metrics
+    networks:
+      - monitoring_network
+      - public_network
+    deploy:
+      mode: global
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+      resources:
+        limits:
+          cpus: '0.2'
+          memory: 200M
+        reservations:
+          cpus: '0.05'
+          memory: 64M
+    read_only: true  # Security improvement
+    security_opt:
+      - no-new-privileges:true  # Security improvement
+    devices:
+      - /dev/kmsg
+
+  ##### CADVISOR ##################################################################
+  node-exporter:
+    image: quay.io/prometheus/node-exporter:v1.9.1
+    command:
+      - '--path.rootfs=/host'
+      - '--web.listen-address=0.0.0.0:9100'
+    volumes:
+      - /:/host:ro,rslave
+    networks:
+      - monitoring_network
+    deploy:
+      mode: global
+    privileged: true
+    pid: host
+
+networks:
+  monitoring_network:
+    driver: overlay
+    name: monitoring_network
+  public_network:
+    external: true

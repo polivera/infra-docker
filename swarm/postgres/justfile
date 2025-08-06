@@ -1,0 +1,16 @@
+encrypt:
+    sops -e secrets.yaml > secrets.enc.yaml
+
+decrypt:
+    sops -d secrets.enc.yaml > docker-compose.override.yml
+
+clean:
+    rm docker-compose.override.yml
+
+deploy-override:
+    docker stack deploy --detach=false -c docker-compose.yml -c docker-compose.override.yml postgres
+
+deploy: decrypt deploy-override clean
+
+destroy:
+    docker stack rm postgres
