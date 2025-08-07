@@ -15,6 +15,8 @@ services:
       PAPERLESS_OCR_LANGUAGE: spa
       PAPERLESS_OCR_LANGUAGES: eng
       PAPERLESS_URL: https://paper.vicugna.party
+#    ports:
+#      -  "8000:8000"
     networks:
       - public_network
       - redis_network

@@ -1,0 +1,5 @@
+deploy:
+    docker stack deploy --detach=false -c docker-compose.yml heimdall
+
+destroy:
+    docker stack rm heimdall

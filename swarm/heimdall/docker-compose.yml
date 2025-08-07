@@ -1,0 +1,32 @@
+services:
+  heimdall:
+    image: lscr.io/linuxserver/heimdall:2.6.3
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: Europe/Madrid
+    volumes:
+      - heimdall_data:/config
+    networks:
+      - public_network
+#    ports:
+#      - "80:80"
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      update_config:
+        order: start-first
+        failure_action: rollback
+
+volumes:
+  heimdall_data:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.0.11,rw,soft,nolock
+      device: ":/mnt/SlowPool/Heimdall"
+
+networks:
+  public_network:
+    external: true

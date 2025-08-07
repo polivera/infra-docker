@@ -4,14 +4,22 @@ services:
     networks:
       - flipflow_network
     ports:
-      - ${TEST_DB_PORT}:3306
+      - 13309:3306
     volumes:
-      - /mnt/flipflow/mysql:/var/lib/mysql
+      - flipflow_mysql_volume:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: ${TEST_DB_PASSWORD}
       MYSQL_DATABASE: ${TEST_DB_DATABASE}
       MYSQL_USER: ${TEST_DB_USERNAME}
       MYSQL_PASSWORD: ${TEST_DB_PASSWORD}
+
+volumes:
+  flipflow_mysql_volume:
+    driver: local
+    driver_opts:
+      type: nfs
+      o: addr=192.168.0.11,rw,soft,nolock
+      device: ":/mnt/FastPool/Flipflow/mysql"
 
 networks:
   flipflow_network:

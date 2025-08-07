@@ -10,7 +10,6 @@ services:
       - postgres:/var/lib/postgresql/data
     networks:
       - postgres_network
-      - public_network
     deploy:
       replicas: 1
       restart_policy:
@@ -71,6 +70,7 @@ volumes:
 networks:
   postgres_network:
     driver: overlay
+    name: postgres_network
     internal: true
   public_network:
     external: true
