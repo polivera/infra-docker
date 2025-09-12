@@ -1,0 +1,9 @@
+deploy: 
+    docker stack deploy --detach=false -c docker-compose.yaml kavita
+
+destroy:
+    docker stack rm kavita
+
+logs:
+    docker service logs kavita_kavita
+

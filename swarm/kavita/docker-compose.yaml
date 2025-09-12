@@ -1,0 +1,34 @@
+services:
+    kavita:
+        image: jvmilazz0/kavita:latest # Using the stable branch from the official dockerhub repo.
+        networks:
+            - public_network
+        volumes:
+            - kavita_config:/kavita/config
+            - kavita_media:/books
+        environment:
+            - TZ=Europe/Madrid
+        deploy:
+            replicas: 1
+            restart_policy:
+                condition: on-failure
+                delay: 10s
+                max_attempts: 3
+
+volumes:
+    kavita_config:
+        driver: local
+        driver_opts:
+            type: nfs
+            o: addr=192.168.0.11,rw,soft,nolock
+            device: ":/mnt/SlowPool/Kavita/config"
+    kavita_media:
+        driver: local
+        driver_opts:
+            type: nfs
+            o: addr=192.168.0.11,rw,soft,nolock
+            device: ":/mnt/SlowPool/Media/books"
+
+networks:
+    public_network:
+        external: true

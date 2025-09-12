@@ -1,0 +1,49 @@
+services:
+    mysql:
+        image: mysql:8.0
+        environment:
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-}
+        volumes:
+            - mysql_data:/var/lib/mysql
+        networks:
+            - db_network
+        deploy:
+            replicas: 1
+            restart_policy:
+                condition: on-failure
+            resources:
+                limits:
+                    cpus: "1"
+                    memory: 1G
+                reservations:
+                    cpus: "0.5"
+                    memory: 512M
+
+    adminer:
+        image: adminer:4.8.1
+        ports:
+            - "8080:8080"
+        environment:
+            ADMINER_DEFAULT_SERVER: mysql
+        networks:
+            - db_network
+        depends_on:
+            - mysql
+volumes:
+    mysql_data:
+        driver: local
+        driver_opts:
+            type: nfs
+            o: addr=192.168.0.11,rw,soft,nolock
+            device: ":/mnt/FastPool/Databases/mysql"
+
+networks:
+    db_network:
+        driver: overlay
+        name: db_network
+        internal: true
+    # OR:
+    # db_network:
+    #   external: true
+    # public_network:
+    #   external: true

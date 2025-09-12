@@ -1,0 +1,8 @@
+deploy:
+    docker stack deploy --detach=false -c docker-compose.yml qbittorrent
+
+destroy:
+    docker stack rm qbittorrent
+
+logs:
+    docker service logs qbittorrent_qbittorrent

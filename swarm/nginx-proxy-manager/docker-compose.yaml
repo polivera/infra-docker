@@ -1,0 +1,64 @@
+services:
+    npmanager:
+        image: "jc21/nginx-proxy-manager:2.12.6"
+        networks:
+            - public_network
+            - db_network
+        environment:
+            DISABLE_IPV6: "true"
+            DB_MYSQL_HOST: ${DB_MYSQL_HOST:-}
+            DB_MYSQL_PORT: ${DB_MYSQL_PORT:-}
+            DB_MYSQL_USER: ${DB_MYSQL_USER:-}
+            DB_MYSQL_PASSWORD: ${DB_MYSQL_PASSWORD:-}
+            DB_MYSQL_NAME: ${DB_MYSQL_NAME:-}
+        volumes:
+            - npmanager_data:/data
+            - npmanager_letsencrypt:/etc/letsencrypt
+        ports:
+            - "80:80"
+            - "443:443"
+            - "81:81"
+        deploy:
+            replicas: 1
+            restart_policy:
+                condition: on-failure
+                delay: 10s
+                max_attempts: 3
+            resources:
+                limits:
+                    cpus: "0.5"
+                    memory: 512M
+                reservations:
+                    cpus: "0.1"
+                    memory: 128M
+            placement:
+                constraints:
+                    - node.role == manager
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:81/"]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 60s
+
+volumes:
+    npmanager_data:
+        driver: local
+        driver_opts:
+            type: nfs
+            o: addr=192.168.0.11,rw,soft,nolock
+            device: ":/mnt/SlowPool/NPManager/data"
+    npmanager_letsencrypt:
+        driver: local
+        driver_opts:
+            type: nfs
+            o: addr=192.168.0.11,rw,soft,nolock
+            device: ":/mnt/SlowPool/NPManager/letsencrypt"
+
+networks:
+    public_network:
+        driver: overlay
+        attachable: true
+        name: public_network
+    db_network:
+        external: true

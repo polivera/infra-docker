@@ -1,0 +1,44 @@
+services:
+    qbittorrent:
+        image: lscr.io/linuxserver/qbittorrent:latest
+        volumes:
+            - qbittorrent_downloads:/downloads
+            - qbittorrent_config:/config
+        environment:
+            - PUID=1000
+            - PGID=1000
+            - TZ=Europe/Madrid
+            - WEBUI_PORT=8080
+            - TORRENTING_PORT=6881
+        ports:
+            - "6881:6881/tcp"
+            - "6881:6881/udp"
+            - "8000:8080/tcp"
+        deploy:
+            mode: replicated
+            replicas: 1
+            restart_policy:
+                condition: on-failure
+                delay: 10s
+                max_attempts: 3
+            resources:
+                limits:
+                    cpus: "0.5"
+                    memory: 512M
+                reservations:
+                    cpus: "0.1"
+                    memory: 128M
+
+volumes:
+    qbittorrent_downloads:
+        driver: local
+        driver_opts:
+            type: nfs
+            o: addr=192.168.0.11,rw,soft,nolock
+            device: ":/mnt/SlowPool/QBittorrent/downloads"
+    qbittorrent_config:
+        driver: local
+        driver_opts:
+            type: nfs
+            o: addr=192.168.0.11,rw,soft,nolock
+            device: ":/mnt/SlowPool/QBittorrent/config"
