@@ -1,0 +1,40 @@
+services:
+    searxng:
+        image: docker.io/searxng/searxng:latest
+        environment:
+            SEARXNG_SECRET: ${SEARXNG_SECRET:-}
+            SEARXNG_VALKEY_URL: ${SEARXNG_VALKEY_URL:-}
+        volumes:
+            - searxng_config:/etc/searxng
+            - searxng_cache:/var/cache/searxng
+        networks:
+            - public_network
+        deploy:
+            replicas: 1
+            restart_policy:
+                condition: on-failure
+            resources:
+                limits:
+                    cpus: "1"
+                    memory: 2G
+                reservations:
+                    cpus: "0.5"
+                    memory: 512M
+volumes:
+    searxng_config:
+        driver: local
+        driver_opts:
+            type: nfs
+            o: addr=192.168.0.11,rw,soft,nolock
+            device: ":/mnt/FastPool/SearXNG/config"
+
+    searxng_cache:
+        driver: local
+        driver_opts:
+            type: nfs
+            o: addr=192.168.0.11,rw,soft,nolock
+            device: ":/mnt/FastPool/SearXNG/cache"
+
+networks:
+    public_network:
+        external: true

@@ -6,7 +6,7 @@ services:
         volumes:
             - mysql_data:/var/lib/mysql
         networks:
-            - db_network
+            - mysql_network
         deploy:
             replicas: 1
             restart_policy:
@@ -14,19 +14,19 @@ services:
             resources:
                 limits:
                     cpus: "1"
-                    memory: 1G
+                    memory: 2G
                 reservations:
                     cpus: "0.5"
                     memory: 512M
-
     adminer:
         image: adminer:4.8.1
-        ports:
-            - "8080:8080"
+        # ports:
+        #     - "8080:8080"
         environment:
             ADMINER_DEFAULT_SERVER: mysql
         networks:
-            - db_network
+            - mysql_network
+            - public_network
         depends_on:
             - mysql
 volumes:
@@ -38,12 +38,9 @@ volumes:
             device: ":/mnt/FastPool/Databases/mysql"
 
 networks:
-    db_network:
+    mysql_network:
         driver: overlay
-        name: db_network
+        name: mysql_network
         internal: true
-    # OR:
-    # db_network:
-    #   external: true
-    # public_network:
-    #   external: true
+    public_network:
+        external: true

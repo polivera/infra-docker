@@ -1,0 +1,47 @@
+services:
+    navidrome:
+        image: deluan/navidrome:latest
+        volumes:
+            - navidrome_data:/data
+            - navidrome_music:/music
+        environment:
+            PUID: 1000
+            PGID: 1000
+            TZ: Europe/Madrid
+            ND_MUSICFOLDER: /music
+            ND_DATAFOLDER: /data
+            ND_ENABLELYRICS: enable
+            ND_LYRICSSOURCES: ".lrc,.txt,embedded"
+        # ports:
+        #     - "4533:4533"
+        networks:
+            - public_network
+        deploy:
+            replicas: 1
+            restart_policy:
+                condition: on-failure
+            resources:
+                limits:
+                    cpus: "0.5"
+                    memory: 512M
+                reservations:
+                    cpus: "0.3"
+                    memory: 128M
+
+volumes:
+    navidrome_data:
+        driver: local
+        driver_opts:
+            type: nfs
+            o: addr=192.168.0.11,rw,soft,nolock
+            device: ":/mnt/SlowPool/Navidrome/data"
+    navidrome_music:
+        driver: local
+        driver_opts:
+            type: nfs
+            o: addr=192.168.0.11,rw,soft,nolock
+            device: ":/mnt/SlowPool/Media/music"
+
+networks:
+    public_network:
+        external: true

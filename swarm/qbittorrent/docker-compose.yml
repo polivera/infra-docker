@@ -13,7 +13,9 @@ services:
         ports:
             - "6881:6881/tcp"
             - "6881:6881/udp"
-            - "8000:8080/tcp"
+            # - "8000:8080/tcp"
+        networks:
+            - public_network
         deploy:
             mode: replicated
             replicas: 1
@@ -42,3 +44,7 @@ volumes:
             type: nfs
             o: addr=192.168.0.11,rw,soft,nolock
             device: ":/mnt/SlowPool/QBittorrent/config"
+
+networks:
+    public_network:
+        external: true

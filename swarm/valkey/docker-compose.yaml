@@ -1,0 +1,59 @@
+services:
+    valkey:
+        image: valkey/valkey:8.0-alpine
+        command: >
+            valkey-server
+            --appendonly yes
+            --appendfsync everysec
+            --save 900 1
+            --save 300 10
+            --save 60 10000
+            --maxmemory 512mb
+            --maxmemory-policy allkeys-lru
+        volumes:
+            - valkey_data:/data
+        networks:
+            - cache_network
+        deploy:
+            replicas: 1
+            placement:
+                constraints:
+                    - node.role == manager # Deploy on manager node for consistency
+            restart_policy:
+                condition: on-failure
+                delay: 5s
+                max_attempts: 3
+                window: 30s
+            resources:
+                limits:
+                    cpus: "0.5"
+                    memory: 1G
+                reservations:
+                    cpus: "0.1"
+                    memory: 256M
+            update_config:
+                parallelism: 1
+                delay: 10s
+                failure_action: rollback
+                order: stop-first
+        healthcheck:
+            test: ["CMD", "valkey-cli", "--no-auth-warning", "ping"]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 30s
+
+volumes:
+    valkey_data:
+        driver: local
+        driver_opts:
+            type: nfs
+            o: addr=192.168.0.11,rw,soft,nolock
+            device: ":/mnt/FastPool/Databases/valkey"
+
+networks:
+    cache_network:
+        driver: overlay
+        name: cache_network
+        internal: true
+        attachable: true # Allows other stacks to connect

@@ -3,7 +3,7 @@ services:
         image: "jc21/nginx-proxy-manager:2.12.6"
         networks:
             - public_network
-            - db_network
+            - mysql_network
         environment:
             DISABLE_IPV6: "true"
             DB_MYSQL_HOST: ${DB_MYSQL_HOST:-}
@@ -17,7 +17,6 @@ services:
         ports:
             - "80:80"
             - "443:443"
-            - "81:81"
         deploy:
             replicas: 1
             restart_policy:
@@ -26,11 +25,11 @@ services:
                 max_attempts: 3
             resources:
                 limits:
+                    cpus: "2.0"
+                    memory: 2G
+                reservations:
                     cpus: "0.5"
                     memory: 512M
-                reservations:
-                    cpus: "0.1"
-                    memory: 128M
             placement:
                 constraints:
                     - node.role == manager
@@ -60,5 +59,5 @@ networks:
         driver: overlay
         attachable: true
         name: public_network
-    db_network:
+    mysql_network:
         external: true
