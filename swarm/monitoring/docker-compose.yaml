@@ -135,43 +135,45 @@ services:
         pid: host
 
     ##### NVIDIA EXPORTER ##################################################################
-    nvidia-gpu-exporter:
-        image: nvcr.io/nvidia/k8s/dcgm-exporter:4.4.0-4.5.0-ubuntu22.04
-        environment:
-            - DCGM_EXPORTER_LISTEN=:9400
-            - DCGM_EXPORTER_KUBERNETES=false
-        volumes:
-            # Mount NVIDIA libraries to fix NVML library not found error
-            - /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1:ro
-            - /usr/bin/nvidia-smi:/usr/bin/nvidia-smi:ro
-        devices:
-            - /dev/nvidia0:/dev/nvidia0
-            - /dev/nvidiactl:/dev/nvidiactl
-            - /dev/nvidia-uvm:/dev/nvidia-uvm
-            - /dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools
-        networks:
-            - monitoring_network
-        # ports:
-        #     - "9400:9400"
-        deploy:
-            placement:
-                constraints:
-                    - node.labels.gpu == nvidia
-            restart_policy:
-                condition: on-failure
-                delay: 10s
-                max_attempts: 3
-            resources:
-                limits:
-                    cpus: "0.3" # Increased CPU limit
-                    memory: 512M # Increased memory limit
-                reservations:
-                    cpus: "0.05"
-                    memory: 64M
-        privileged: true
-        cap_add:
-            - SYS_ADMIN
-
+    # nvidia-gpu-exporter:
+    #     image: utkuozdemir/nvidia_gpu_exporter:1.2.1
+    #     environment:
+    #         NVIDIA_VISIBLE_DEVICES: all
+    #         LD_LIBRARY_PATH: /usr/lib/x86_64-linux-gnu
+    #     volumes:
+    #         - /usr/bin/nvidia-smi:/usr/bin/nvidia-smi:ro
+    #         - /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1:ro
+    #         - /usr/lib/x86_64-linux-gnu/libcuda.so.1:/usr/lib/x86_64-linux-gnu/libcuda.so.1:ro
+    #         - /usr/lib/x86_64-linux-gnu/libcuda.so:/usr/lib/x86_64-linux-gnu/libcuda.so:ro
+    #     devices:
+    #         - /dev/nvidia0:/dev/nvidia0
+    #         - /dev/nvidiactl:/dev/nvidiactl
+    #         - /dev/nvidia-uvm:/dev/nvidia-uvm
+    #         - /dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools
+    #         - /dev/nvidia-modeset:/dev/nvidia-modeset
+    #     networks:
+    #         - monitoring_network
+    #     ports:
+    #         - "9835:9835"
+    #     deploy:
+    #         placement:
+    #             constraints:
+    #                 - node.labels.gpu == nvidia
+    #         restart_policy:
+    #             condition: on-failure
+    #             delay: 10s
+    #             max_attempts: 3
+    #         resources:
+    #             limits:
+    #                 cpus: "0.3"
+    #                 memory: 512M
+    #             reservations:
+    #                 cpus: "0.05"
+    #                 memory: 64M
+    #     privileged: true
+    #     cap_add:
+    #         - SYS_ADMIN
+    #
 ##### Volumes ##################################################################
 volumes:
     grafana_data:
