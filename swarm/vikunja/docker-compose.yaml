@@ -1,0 +1,43 @@
+services:
+    vikunja:
+        image: vikunja/vikunja:latest
+        # ports:
+        #     - "3456:3456"
+        networks:
+            - public_network
+            - mysql_network
+        volumes:
+            - vikunja_files:/app/vikunja/files
+        environment:
+            VIKUNJA_SERVICE_JWTSECRET: your-jwt-secret-change-this-to-something-random
+            VIKUNJA_SERVICE_PUBLICURL: http://<the public ip or host where Vikunja is reachable>
+            VIKUNJA_DATABASE_HOST: db
+            VIKUNJA_DATABASE_PASSWORD: changeme
+            VIKUNJA_DATABASE_TYPE: postgres
+            VIKUNJA_DATABASE_USER: vikunja
+            VIKUNJA_DATABASE_DATABASE: vikunja
+        deploy:
+            replicas: 1
+            restart_policy:
+                condition: on-failure
+            resources:
+                limits:
+                    cpus: "1"
+                    memory: 2G
+                reservations:
+                    cpus: "0.5"
+                    memory: 512M
+
+volumes:
+    vikunja_files:
+        driver: local
+        driver_opts:
+            type: nfs
+            o: addr=192.168.0.11,rw,soft,nolock
+            device: ":/mnt/SlowPool/Vikunja/files"
+
+networks:
+    public_network:
+        external: true
+    mysql_network:
+        external: true

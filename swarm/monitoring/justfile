@@ -2,13 +2,13 @@ encrypt:
     sops -e secrets.yaml > secrets.enc.yaml
 
 decrypt:
-    sops -d secrets.enc.yaml > docker-compose.override.yml
+    sops -d secrets.enc.yaml > docker-compose.override.yaml
 
 clean:
-    rm docker-compose.override.yml
+    rm docker-compose.override.yaml
 
 deploy-override:
-    docker stack deploy --detach=false -c docker-compose.yml -c docker-compose.override.yml monitoring
+    docker stack deploy --detach=false -c docker-compose.yaml -c docker-compose.override.yaml monitoring
 
 deploy: decrypt deploy-override clean
 

@@ -1,0 +1,19 @@
+encrypt:
+    sops -e docker-compose.override.yaml > secrets.enc.yaml
+
+decrypt:
+    sops -d secrets.enc.yaml > docker-compose.override.yaml
+
+clean:
+    rm docker-compose.override.yaml
+
+deploy-override:
+    docker stack deploy --detach=false -c docker-compose.yaml -c docker-compose.override.yaml vikunja
+
+deploy: decrypt deploy-override clean
+
+destroy:
+    docker stack rm vikunja
+
+logs:
+    docker service logs vikunja_vikunja

@@ -1,0 +1,54 @@
+global:
+    scrape_interval: 15s
+    evaluation_interval: 15s
+
+rule_files:
+    # - "first_rules.yml"
+    # - "second_rules.yml"
+
+scrape_configs:
+    # Prometheus itself
+    - job_name: "prometheus"
+      static_configs:
+          - targets: ["localhost:9090"]
+
+    # cAdvisor - Container metrics
+    - job_name: "cadvisor"
+      static_configs:
+          - targets: ["cadvisor:8080"]
+      scrape_interval: 30s
+
+    # Node Exporter - Host metrics
+    - job_name: "node-exporter"
+      static_configs:
+          - targets: ["node-exporter:9100"]
+      scrape_interval: 15s
+
+    # Grafana metrics (optional)
+    - job_name: "grafana"
+      static_configs:
+          - targets: ["grafana:3000"]
+      metrics_path: "/metrics"
+      scrape_interval: 30s
+
+    # NVIDIA DCGM Exporter (Official NVIDIA GPU metrics)
+    - job_name: "dcgm-exporter"
+      static_configs:
+          - targets: ["nvidia-gpu-exporter:9400"]
+      scrape_interval: 15s
+      scrape_timeout: 10s
+
+    # Docker Swarm service discovery (if you want to auto-discover services)
+    - job_name: "docker-swarm"
+      dockerswarm_sd_configs:
+          - host: unix:///var/run/docker.sock
+            role: services
+            port: 9090
+      relabel_configs:
+          - source_labels: [__meta_dockerswarm_service_label_prometheus_job]
+            target_label: __tmp_prometheus_job_name
+          - source_labels: [__tmp_prometheus_job_name]
+            regex: .+
+            target_label: job
+          - regex: __tmp_prometheus_job_name
+            action: labeldrop

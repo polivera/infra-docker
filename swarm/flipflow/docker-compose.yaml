@@ -1,0 +1,218 @@
+services:
+    ###################################################################################################################
+    # MySQL
+    ###################################################################################################################
+    mysql:
+        image: mysql:8.4
+        networks:
+            - flipflow_network
+        ports:
+            - 11875:3306
+        volumes:
+            - flipflow_mysql_volume:/var/lib/mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: ${TEST_DB_PASSWORD}
+            MYSQL_DATABASE: ${TEST_DB_DATABASE}
+            MYSQL_USER: ${TEST_DB_USERNAME}
+            MYSQL_PASSWORD: ${TEST_DB_PASSWORD}
+
+    ###################################################################################################################
+    # Duid
+    ###################################################################################################################
+    druid-postgres:
+        container_name: postgres
+        image: postgres:latest
+        volumes:
+            - .docker/druid/db:/var/lib/postgresql/data
+        environment:
+            - POSTGRES_PASSWORD=FoolishPassword
+            - POSTGRES_USER=druid
+            - POSTGRES_DB=druid
+
+    druid-zookeeper:
+        container_name: zookeeper
+        image: zookeeper:3.5.10
+        environment:
+            - ZOO_MY_ID=1
+
+    druid-coordinator:
+        image: apache/druid:33.0.0
+        container_name: coordinator
+        volumes:
+            - .docker/druid/shared:/opt/shared
+            - .docker/druid/coordinator:/opt/druid/var
+        depends_on:
+            - druid-zookeeper
+            - druid-postgres
+        command:
+            - coordinator
+        environment:
+            - DRUID_SINGLE_NODE_CONF=micro-quickstart
+            - druid_emitter_logging_logLevel=debug
+            - druid_extensions_loadList=["druid-histogram", "druid-datasketches", "druid-lookups-cached-global", "postgresql-metadata-storage", "druid-multi-stage-query", "druid-google-extensions", "druid-s3-extensions"]
+            - druid_zk_service_host=zookeeper
+            - druid_metadata_storage_host=
+            - druid_metadata_storage_type=postgresql
+            - druid_metadata_storage_connector_connectURI=jdbc:postgresql://postgres:5432/druid
+            - druid_metadata_storage_connector_user=druid
+            - druid_metadata_storage_connector_password=FoolishPassword
+            - druid_indexer_runner_javaOptsArray=["-server", "-Xmx1g", "-Xms1g", "-XX:MaxDirectMemorySize=3g", "-Duser.timezone=UTC", "-Dfile.encoding=UTF-8", "-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager"]
+            - druid_indexer_fork_property_druid_processing_buffer_sizeBytes=256MiB
+            - druid_storage_type=local
+            - druid_storage_storageDirectory=/opt/shared/segments
+            - druid_indexer_logs_type=file
+            - druid_indexer_logs_directory=/opt/shared/indexing-logs
+            - druid_processing_numThreads=2
+            - druid_processing_numMergeBuffers=2
+            - DRUID_LOG4J=<?xml version="1.0" encoding="UTF-8" ?><Configuration status="WARN"><Appenders><Console name="Console" target="SYSTEM_OUT"><PatternLayout pattern="%d{ISO8601} %p [%t] %c - %m%n"/></Console></Appenders><Loggers><Root level="info"><AppenderRef ref="Console"/></Root><Logger name="org.apache.druid.jetty.RequestLog" additivity="false" level="DEBUG"><AppenderRef ref="Console"/></Logger></Loggers></Configuration>
+
+        druid-broker:
+            image: apache/druid:33.0.0
+            container_name: broker
+            volumes:
+                - .docker/druid/broker:/opt/druid/var
+            depends_on:
+                - druid-zookeeper
+                - druid-postgres
+                - druid-coordinator
+            command:
+                - broker
+            environment:
+                - DRUID_SINGLE_NODE_CONF=micro-quickstart
+                - druid_emitter_logging_logLevel=debug
+                - druid_extensions_loadList=["druid-histogram", "druid-datasketches", "druid-lookups-cached-global", "postgresql-metadata-storage", "druid-multi-stage-query", "druid-google-extensions", "druid-s3-extensions"]
+                - druid_zk_service_host=zookeeper
+                - druid_metadata_storage_host=
+                - druid_metadata_storage_type=postgresql
+                - druid_metadata_storage_connector_connectURI=jdbc:postgresql://postgres:5432/druid
+                - druid_metadata_storage_connector_user=druid
+                - druid_metadata_storage_connector_password=FoolishPassword
+                - druid_indexer_runner_javaOptsArray=["-server", "-Xmx1g", "-Xms1g", "-XX:MaxDirectMemorySize=3g", "-Duser.timezone=UTC", "-Dfile.encoding=UTF-8", "-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager"]
+                - druid_indexer_fork_property_druid_processing_buffer_sizeBytes=256MiB
+                - druid_storage_type=local
+                - druid_storage_storageDirectory=/opt/shared/segments
+                - druid_indexer_logs_type=file
+                - druid_indexer_logs_directory=/opt/shared/indexing-logs
+                - druid_processing_numThreads=2
+                - druid_processing_numMergeBuffers=2
+                - DRUID_LOG4J=<?xml version="1.0" encoding="UTF-8" ?><Configuration status="WARN"><Appenders><Console name="Console" target="SYSTEM_OUT"><PatternLayout pattern="%d{ISO8601} %p [%t] %c - %m%n"/></Console></Appenders><Loggers><Root level="info"><AppenderRef ref="Console"/></Root><Logger name="org.apache.druid.jetty.RequestLog" additivity="false" level="DEBUG"><AppenderRef ref="Console"/></Logger></Loggers></Configuration>
+
+            druid-historical:
+                image: apache/druid:33.0.0
+                container_name: historical
+                volumes:
+                    - .docker/druid/shared:/opt/shared
+                    - .docker/druid/historical:/opt/druid/var
+                depends_on:
+                    - druid-zookeeper
+                    - druid-postgres
+                    - druid-coordinator
+                command:
+                    - historical
+                environment:
+                    - DRUID_SINGLE_NODE_CONF=micro-quickstart
+                    - druid_emitter_logging_logLevel=debug
+                    - druid_extensions_loadList=["druid-histogram", "druid-datasketches", "druid-lookups-cached-global", "postgresql-metadata-storage", "druid-multi-stage-query", "druid-google-extensions", "druid-s3-extensions"]
+                    - druid_zk_service_host=zookeeper
+                    - druid_metadata_storage_host=
+                    - druid_metadata_storage_type=postgresql
+                    - druid_metadata_storage_connector_connectURI=jdbc:postgresql://postgres:5432/druid
+                    - druid_metadata_storage_connector_user=druid
+                    - druid_metadata_storage_connector_password=FoolishPassword
+                    - druid_indexer_runner_javaOptsArray=["-server", "-Xmx1g", "-Xms1g", "-XX:MaxDirectMemorySize=3g", "-Duser.timezone=UTC", "-Dfile.encoding=UTF-8", "-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager"]
+                    - druid_indexer_fork_property_druid_processing_buffer_sizeBytes=256MiB
+                    - druid_storage_type=local
+                    - druid_storage_storageDirectory=/opt/shared/segments
+                    - druid_indexer_logs_type=file
+                    - druid_indexer_logs_directory=/opt/shared/indexing-logs
+                    - druid_processing_numThreads=2
+                    - druid_processing_numMergeBuffers=2
+                    - DRUID_LOG4J=<?xml version="1.0" encoding="UTF-8" ?><Configuration status="WARN"><Appenders><Console name="Console" target="SYSTEM_OUT"><PatternLayout pattern="%d{ISO8601} %p [%t] %c - %m%n"/></Console></Appenders><Loggers><Root level="info"><AppenderRef ref="Console"/></Root><Logger name="org.apache.druid.jetty.RequestLog" additivity="false" level="DEBUG"><AppenderRef ref="Console"/></Logger></Loggers></Configuration>
+
+            druid-middlemanager:
+                image: apache/druid:33.0.0
+                container_name: middlemanager
+                volumes:
+                    - .docker/druid/shared:/opt/shared
+                    - .docker/druid/middlemanager:/opt/druid/var
+                depends_on:
+                    - druid-zookeeper
+                    - druid-postgres
+                    - druid-coordinator
+                command:
+                    - middleManager
+                environment:
+                    - DRUID_SINGLE_NODE_CONF=micro-quickstart
+                    - druid_emitter_logging_logLevel=debug
+                    - druid_extensions_loadList=["druid-histogram", "druid-datasketches", "druid-lookups-cached-global", "postgresql-metadata-storage", "druid-multi-stage-query", "druid-google-extensions", "druid-s3-extensions"]
+                    - druid_zk_service_host=zookeeper
+                    - druid_metadata_storage_host=
+                    - druid_metadata_storage_type=postgresql
+                    - druid_metadata_storage_connector_connectURI=jdbc:postgresql://postgres:5432/druid
+                    - druid_metadata_storage_connector_user=druid
+                    - druid_metadata_storage_connector_password=FoolishPassword
+                    - druid_indexer_runner_javaOptsArray=["-server", "-Xmx1g", "-Xms1g", "-XX:MaxDirectMemorySize=3g", "-Duser.timezone=UTC", "-Dfile.encoding=UTF-8", "-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager"]
+                    - druid_indexer_fork_property_druid_processing_buffer_sizeBytes=256MiB
+                    - druid_storage_type=local
+                    - druid_storage_storageDirectory=/opt/shared/segments
+                    - druid_indexer_logs_type=file
+                    - druid_indexer_logs_directory=/opt/shared/indexing-logs
+                    - druid_processing_numThreads=2
+                    - druid_processing_numMergeBuffers=2
+                    - DRUID_LOG4J=<?xml version="1.0" encoding="UTF-8" ?><Configuration status="WARN"><Appenders><Console name="Console" target="SYSTEM_OUT"><PatternLayout pattern="%d{ISO8601} %p [%t] %c - %m%n"/></Console></Appenders><Loggers><Root level="info"><AppenderRef ref="Console"/></Root><Logger name="org.apache.druid.jetty.RequestLog" additivity="false" level="DEBUG"><AppenderRef ref="Console"/></Logger></Loggers></Configuration>
+
+            druid-router:
+                image: apache/druid:33.0.0
+                container_name: router
+                volumes:
+                    - .docker/druid/router:/opt/druid/var
+                depends_on:
+                    - druid-zookeeper
+                    - druid-postgres
+                    - druid-coordinator
+                    - druid-file-server
+                ports:
+                    - "8888:8888"
+                command:
+                    - router
+                environment:
+                    - DRUID_SINGLE_NODE_CONF=micro-quickstart
+                    - druid_emitter_logging_logLevel=debug
+                    - druid_extensions_loadList=["druid-histogram", "druid-datasketches", "druid-lookups-cached-global", "postgresql-metadata-storage", "druid-multi-stage-query", "druid-google-extensions", "druid-s3-extensions"]
+                    - druid_zk_service_host=zookeeper
+                    - druid_metadata_storage_host=
+                    - druid_metadata_storage_type=postgresql
+                    - druid_metadata_storage_connector_connectURI=jdbc:postgresql://postgres:5432/druid
+                    - druid_metadata_storage_connector_user=druid
+                    - druid_metadata_storage_connector_password=FoolishPassword
+                    - druid_indexer_runner_javaOptsArray=["-server", "-Xmx1g", "-Xms1g", "-XX:MaxDirectMemorySize=3g", "-Duser.timezone=UTC", "-Dfile.encoding=UTF-8", "-Djava.util.logging.manager=org.apache.logging.log4j.jul.LogManager"]
+                    - druid_indexer_fork_property_druid_processing_buffer_sizeBytes=256MiB
+                    - druid_storage_type=local
+                    - druid_storage_storageDirectory=/opt/shared/segments
+                    - druid_indexer_logs_type=file
+                    - druid_indexer_logs_directory=/opt/shared/indexing-logs
+                    - druid_processing_numThreads=2
+                    - druid_processing_numMergeBuffers=2
+                    - DRUID_LOG4J=<?xml version="1.0" encoding="UTF-8" ?><Configuration status="WARN"><Appenders><Console name="Console" target="SYSTEM_OUT"><PatternLayout pattern="%d{ISO8601} %p [%t] %c - %m%n"/></Console></Appenders><Loggers><Root level="info"><AppenderRef ref="Console"/></Root><Logger name="org.apache.druid.jetty.RequestLog" additivity="false" level="DEBUG"><AppenderRef ref="Console"/></Logger></Loggers></Configuration>
+
+            druid-file-server:
+                image: nginx:alpine
+                container_name: file-server
+                ports:
+                    - "8090:80"
+                volumes:
+                    - ./storage/app/druid/:/usr/share/nginx/html:ro
+
+volumes:
+    flipflow_mysql_volume:
+        driver: local
+        driver_opts:
+            type: nfs
+            o: addr=192.168.0.11,rw,soft,nolock
+            device: ":/mnt/FastPool/Flipflow/mysql"
+
+networks:
+    flipflow_network:
+        driver: overlay
+        attachable: true
+        name: flipflow_network
