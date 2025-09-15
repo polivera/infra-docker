@@ -1,0 +1,4 @@
+services:
+    mysql:
+        environment:
+            MYSQL_ROOT_PASSWORD: aoijwsfoauihi2iuhf88afsuh

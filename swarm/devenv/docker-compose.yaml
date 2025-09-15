@@ -1,0 +1,36 @@
+services:
+    mysql:
+        image: mysql:8.0
+        environment:
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-}
+        volumes:
+            - dev_mysql_data:/var/lib/mysql
+        networks:
+            - dev_network
+        ports:
+            - "10306:3306/tcp"
+        deploy:
+            replicas: 1
+            restart_policy:
+                condition: on-failure
+            resources:
+                limits:
+                    cpus: "1"
+                    memory: 2G
+                reservations:
+                    cpus: "0.5"
+                    memory: 512M
+
+volumes:
+    dev_mysql_data:
+        driver: local
+        driver_opts:
+            type: nfs
+            o: addr=192.168.0.11,rw,soft,nolock
+            device: ":/mnt/FastPool/Development/mysql"
+
+networks:
+    dev_network:
+        driver: overlay
+        name: dev_network
+        internal: true
