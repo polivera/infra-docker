@@ -1,0 +1,9 @@
+deploy: 
+    docker stack deploy --detach=false -c docker-compose.yaml jellyfin
+
+destroy:
+    docker stack rm jellyfin
+
+logs:
+    docker service logs jellyfin_jellyfin
+

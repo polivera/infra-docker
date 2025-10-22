@@ -1,0 +1,50 @@
+services:
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    ports:
+      - "7359:7359/udp"  # Auto-discovery service
+      - "1900:1900/udp"  # DLNA service
+    volumes:
+      - jellyfin_config:/config
+      - jellyfin_cache:/cache
+      - jellyfin_movies:/media
+      - jellyfin_courses:/courses
+    networks:
+      - public_network
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.gpu == nvidia
+      restart_policy:
+        condition: on-failure
+
+volumes:
+    jellyfin_config:
+        driver: local
+        driver_opts:
+            type: nfs
+            o: addr=192.168.0.11,rw,soft,nolock
+            device: ":/mnt/FastPool/Jellyfin/config"
+    jellyfin_cache:
+      driver: local
+      driver_opts:
+        type: nfs
+        o: addr=192.168.0.11,rw,soft,nolock
+        device: ":/mnt/FastPool/Jellyfin/cache"
+    jellyfin_movies:
+      driver: local
+      driver_opts:
+        type: nfs
+        o: addr=192.168.0.11,rw,soft,nolock
+        device: ":/mnt/SlowPool/Media/movies"
+    jellyfin_courses:
+      driver: local
+      driver_opts:
+        type: nfs
+        o: addr=192.168.0.11,rw,soft,nolock
+        device: ":/mnt/SlowPool/Media/courses"
+
+networks:
+    public_network:
+        external: true

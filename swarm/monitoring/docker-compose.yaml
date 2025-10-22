@@ -134,46 +134,34 @@ services:
         privileged: true
         pid: host
 
-    ##### NVIDIA EXPORTER ##################################################################
-    # nvidia-gpu-exporter:
-    #     image: utkuozdemir/nvidia_gpu_exporter:1.2.1
-    #     environment:
-    #         NVIDIA_VISIBLE_DEVICES: all
-    #         LD_LIBRARY_PATH: /usr/lib/x86_64-linux-gnu
-    #     volumes:
-    #         - /usr/bin/nvidia-smi:/usr/bin/nvidia-smi:ro
-    #         - /usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1:/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.1:ro
-    #         - /usr/lib/x86_64-linux-gnu/libcuda.so.1:/usr/lib/x86_64-linux-gnu/libcuda.so.1:ro
-    #         - /usr/lib/x86_64-linux-gnu/libcuda.so:/usr/lib/x86_64-linux-gnu/libcuda.so:ro
-    #     devices:
-    #         - /dev/nvidia0:/dev/nvidia0
-    #         - /dev/nvidiactl:/dev/nvidiactl
-    #         - /dev/nvidia-uvm:/dev/nvidia-uvm
-    #         - /dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools
-    #         - /dev/nvidia-modeset:/dev/nvidia-modeset
-    #     networks:
-    #         - monitoring_network
-    #     ports:
-    #         - "9835:9835"
-    #     deploy:
-    #         placement:
-    #             constraints:
-    #                 - node.labels.gpu == nvidia
-    #         restart_policy:
-    #             condition: on-failure
-    #             delay: 10s
-    #             max_attempts: 3
-    #         resources:
-    #             limits:
-    #                 cpus: "0.3"
-    #                 memory: 512M
-    #             reservations:
-    #                 cpus: "0.05"
-    #                 memory: 64M
-    #     privileged: true
-    #     cap_add:
-    #         - SYS_ADMIN
-    #
+#    ##### NVIDIA EXPORTER ##################################################################
+#    # See: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
+#    nvidia-gpu-exporter:
+#        image: mindprince/nvidia_gpu_prometheus_exporter:0.1
+#        environment:
+#            NVIDIA_VISIBLE_DEVICES: all
+#        volumes:
+#            - /usr/bin/nvidia-smi:/usr/bin/nvidia-smi:ro
+#            - /usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:ro
+#        networks:
+#            - monitoring_network
+#        deploy:
+#            mode: global
+#            placement:
+#                constraints:
+#                    - node.labels.gpu == nvidia
+#            restart_policy:
+#                condition: on-failure
+#                delay: 10s
+#                max_attempts: 3
+#            resources:
+#                limits:
+#                    cpus: "0.2"
+#                    memory: 256M
+#                reservations:
+#                    cpus: "0.05"
+#                    memory: 64M
+#
 ##### Volumes ##################################################################
 volumes:
     grafana_data:
