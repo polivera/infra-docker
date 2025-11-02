@@ -17,6 +17,7 @@ services:
         ports:
             - "80:80"
             - "443:443"
+            # - "81:81" # Admin Web Port
         deploy:
             replicas: 1
             restart_policy:
@@ -44,15 +45,16 @@ volumes:
     npmanager_data:
         driver: local
         driver_opts:
-            type: nfs
-            o: addr=192.168.0.11,rw,soft,nolock
-            device: ":/mnt/SlowPool/NPManager/data"
+            type: local
+            o: bind
+            device: "/mnt/gluster-hdd/npmanager/data"
+
     npmanager_letsencrypt:
         driver: local
         driver_opts:
-            type: nfs
-            o: addr=192.168.0.11,rw,soft,nolock
-            device: ":/mnt/SlowPool/NPManager/letsencrypt"
+            type: local
+            o: bind
+            device: "/mnt/gluster-hdd/npmanager/letsencrypt"
 
 networks:
     public_network:

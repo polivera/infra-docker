@@ -1,0 +1,9 @@
+deploy: 
+    docker stack deploy --detach=false -c docker-compose.yaml filebrowser
+
+destroy:
+    docker stack rm filebrowser
+
+logs:
+    docker service logs filebrowser_filebrowser
+

@@ -1,6 +1,8 @@
 services:
     kavita:
         image: jvmilazz0/kavita:latest # Using the stable branch from the official dockerhub repo.
+        # ports:
+        # - 5000:5000
         networks:
             - public_network
         volumes:
@@ -19,15 +21,15 @@ volumes:
     kavita_config:
         driver: local
         driver_opts:
-            type: nfs
-            o: addr=192.168.0.11,rw,soft,nolock
-            device: ":/mnt/SlowPool/Kavita/config"
+            type: local
+            o: bind
+            device: "/mnt/gluster-hdd/kavita/config"
     kavita_media:
         driver: local
         driver_opts:
-            type: nfs
-            o: addr=192.168.0.11,rw,soft,nolock
-            device: ":/mnt/SlowPool/Media/books"
+            type: local
+            o: bind
+            device: "/mnt/gluster-hdd/media/books"
 
 networks:
     public_network:

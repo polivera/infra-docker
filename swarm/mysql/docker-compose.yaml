@@ -3,6 +3,8 @@ services:
         image: mysql:8.0
         environment:
             MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-}
+        ports:
+            - "3306:3306"
         volumes:
             - mysql_data:/var/lib/mysql
         networks:
@@ -15,27 +17,6 @@ services:
                 limits:
                     cpus: "1"
                     memory: 2G
-                reservations:
-                    cpus: "0.5"
-                    memory: 512M
-
-    adminer:
-        image: adminer:4.8.1
-        # ports:
-        #     - "8080:8080"
-        environment:
-            ADMINER_DEFAULT_SERVER: mysql
-        networks:
-            - mysql_network
-            - public_network
-        deploy:
-            replicas: 1
-            restart_policy:
-                condition: on-failure
-            resources:
-                limits:
-                    cpus: "1"
-                    memory: 1G
                 reservations:
                     cpus: "0.5"
                     memory: 512M
@@ -94,20 +75,18 @@ volumes:
     mysql_data:
         driver: local
         driver_opts:
-            type: nfs
-            o: addr=192.168.0.11,rw,soft,nolock
-            device: ":/mnt/FastPool/Databases/mysql"
+            type: none
+            o: bind
+            device: "/mnt/gluster-ssd/mysql"
     mysql_backups:
         driver: local
         driver_opts:
-            type: nfs
-            o: addr=192.168.0.11,rw,soft,nolock
-            device: ":/mnt/SlowPool/Backups/mysql"
+            type: local
+            o: bind
+            device: "/mnt/gluster-hdd/backups/mysql"
 
 networks:
     mysql_network:
         driver: overlay
         name: mysql_network
         internal: true
-    public_network:
-        external: true
