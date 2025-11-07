@@ -2,15 +2,15 @@ services:
     filebrowser:
         image: filebrowser/filebrowser:latest
         volumes:
-            - filebrowser_config:/config
-            - filebrowser_database:/database
-            - filebrowser_data:/srv
+            - /mnt/slow/filebrowser/config:/config
+            - /mnt/slow/filebrowser/database:/database
+            - /mnt/slow/media:/srv
         environment:
             - PUID=1000
             - PGID=1000
             - TZ=Europe/Madrid
-        ports:
-            - "8080:80"
+        # ports:
+        #     - "8080:80"
         networks:
             - public_network
         deploy:
@@ -28,25 +28,25 @@ services:
                     cpus: "0.05"
                     memory: 64M
 
-volumes:
-    filebrowser_config:
-        driver: local
-        driver_opts:
-            type: local
-            o: bind
-            device: "/mnt/gluster-hdd/filebrowser/config"
-    filebrowser_database:
-        driver: local
-        driver_opts:
-            type: local
-            o: bind
-            device: "/mnt/gluster-hdd/filebrowser/database"
-    filebrowser_data:
-        driver: local
-        driver_opts:
-            type: local
-            o: bind
-            device: "/mnt/gluster-hdd/media"
+# volumes:
+#     filebrowser_config:
+#         driver: local
+#         driver_opts:
+#             type: local
+#             o: bind
+#             device: "/mnt/gluster-hdd/filebrowser/config"
+#     filebrowser_database:
+#         driver: local
+#         driver_opts:
+#             type: local
+#             o: bind
+#             device: "/mnt/gluster-hdd/filebrowser/database"
+#     filebrowser_data:
+#         driver: local
+#         driver_opts:
+#             type: local
+#             o: bind
+#             device: "/mnt/gluster-hdd/media"
 
 networks:
     public_network:

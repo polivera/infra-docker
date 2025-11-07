@@ -12,12 +12,12 @@ services:
             DB_MYSQL_PASSWORD: ${DB_MYSQL_PASSWORD:-}
             DB_MYSQL_NAME: ${DB_MYSQL_NAME:-}
         volumes:
-            - npmanager_data:/data
-            - npmanager_letsencrypt:/etc/letsencrypt
+            - /mnt/slow/proxy-manager/data:/data
+            - /mnt/slow/proxy-manager/letsencrypt:/etc/letsencrypt
         ports:
             - "80:80"
             - "443:443"
-            # - "81:81" # Admin Web Port
+            - "81:81" # Admin Web Port
         deploy:
             replicas: 1
             restart_policy:
@@ -41,20 +41,20 @@ services:
             retries: 3
             start_period: 60s
 
-volumes:
-    npmanager_data:
-        driver: local
-        driver_opts:
-            type: local
-            o: bind
-            device: "/mnt/gluster-hdd/npmanager/data"
-
-    npmanager_letsencrypt:
-        driver: local
-        driver_opts:
-            type: local
-            o: bind
-            device: "/mnt/gluster-hdd/npmanager/letsencrypt"
+# volumes:
+#     npmanager_data:
+#         driver: local
+#         driver_opts:
+#             type: local
+#             o: bind
+#             device: "/mnt/gluster-hdd/npmanager/data"
+#
+#     npmanager_letsencrypt:
+#         driver: local
+#         driver_opts:
+#             type: local
+#             o: bind
+#             device: "/mnt/gluster-hdd/npmanager/letsencrypt"
 
 networks:
     public_network:

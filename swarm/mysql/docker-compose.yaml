@@ -6,7 +6,7 @@ services:
         ports:
             - "3306:3306"
         volumes:
-            - mysql_data:/var/lib/mysql
+            - /mnt/fast/mysql:/var/lib/mysql
         networks:
             - mysql_network
         deploy:
@@ -24,11 +24,11 @@ services:
     mysql-cron-backup:
         image: mysql:8.0
         volumes:
-            - mysql_backups:/backups
+            - /mnt/slow/backups/mysql:/backups
         environment:
             MYSQL_HOST: mysql
             MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-            DATABASE_NAMES: "npmanager,gitea,vikunja"
+            DATABASE_NAMES: "npmanager"
         networks:
             - mysql_network
         command: |
@@ -71,19 +71,19 @@ services:
                     cpus: "0.5"
                     memory: 512M
 
-volumes:
-    mysql_data:
-        driver: local
-        driver_opts:
-            type: none
-            o: bind
-            device: "/mnt/gluster-ssd/mysql"
-    mysql_backups:
-        driver: local
-        driver_opts:
-            type: local
-            o: bind
-            device: "/mnt/gluster-hdd/backups/mysql"
+# volumes:
+#     mysql_data:
+#         driver: local
+#         driver_opts:
+#             type: none
+#             o: bind
+#             device: "/mnt/fast/mysql"
+#     mysql_backups:
+#         driver: local
+#         driver_opts:
+#             type: local
+#             o: bind
+#             device: "/mnt/fast/backups/mysql"
 
 networks:
     mysql_network:

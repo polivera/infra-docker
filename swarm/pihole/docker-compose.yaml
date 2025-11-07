@@ -7,7 +7,7 @@ services:
             - "53:53/tcp"
             - "53:53/udp"
             # Default HTTP Port
-            # - "81:80/tcp"
+            - "82:80/tcp"
             # Default HTTPs Port. FTL will generate a self-signed certificate
             # - "443:443/tcp"
             # Uncomment the line below if you are using Pi-hole as your DHCP server
@@ -26,7 +26,7 @@ services:
         # Volumes store your data between container upgrades
         volumes:
             # For persisting Pi-hole's databases and common configuration file
-            - pihole_data:/etc/pihole
+            - /mnt/fast/pihole:/etc/pihole
             # Uncomment the below if you have custom dnsmasq config files that you want to persist. Not needed for most starting fresh with Pi-hole v6. If you're upgrading from v5 you and have used this directory before, you should keep it enabled for the first v6 container start to allow for a complete migration. It can be removed afterwards. Needs environment variable FTLCONF_misc_etc_dnsmasq_d: 'true'
             #- './etc-dnsmasq.d:/etc/dnsmasq.d'
         deploy:
@@ -48,13 +48,13 @@ services:
             - SYS_TIME
             # Optional, if Pi-hole should get some more processing time
 
-volumes:
-    pihole_data:
-        driver: local
-        driver_opts:
-            type: local
-            o: bind
-            device: "/mnt/gluster-ssd/pihole"
+# volumes:
+#     pihole_data:
+#         driver: local
+#         driver_opts:
+#             type: local
+#             o: bind
+#             device: "/mnt/gluster-ssd/pihole"
 
 networks:
     public_network:
